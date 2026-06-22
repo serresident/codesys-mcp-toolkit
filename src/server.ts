@@ -256,7 +256,11 @@ def ensure_project_open(target_project_path):
 # --- End of function ---
 
 # Placeholder for the project file path (must be set in scripts using this snippet)
-PROJECT_FILE_PATH = r"{PROJECT_FILE_PATH}"
+PROJECT_FILE_PATH_RAW = r"{PROJECT_FILE_PATH}"
+try:
+    PROJECT_FILE_PATH = PROJECT_FILE_PATH_RAW.decode('utf-8')
+except:
+    PROJECT_FILE_PATH = PROJECT_FILE_PATH_RAW
 `;
 
     const CHECK_STATUS_SCRIPT = `
@@ -309,7 +313,11 @@ except Exception as e:
 import sys, scriptengine as script_engine, os, shutil, time, traceback
 # Placeholders
 TEMPLATE_PROJECT_PATH = r'{TEMPLATE_PROJECT_PATH}' # Path to Standard.project
-PROJECT_FILE_PATH = r'{PROJECT_FILE_PATH}'    # Path for the new project (Target Path)
+PROJECT_FILE_PATH_RAW = r'{PROJECT_FILE_PATH}'    # Path for the new project (Target Path)
+try:
+    PROJECT_FILE_PATH = PROJECT_FILE_PATH_RAW.decode('utf-8')
+except:
+    PROJECT_FILE_PATH = PROJECT_FILE_PATH_RAW
 try:
     print("DEBUG: Python script create_project (copy from template):")
     print("DEBUG:   Template Source = %s" % TEMPLATE_PROJECT_PATH)
@@ -1045,7 +1053,7 @@ except Exception as e:
         // *** DEFINE VARIABLES (like projectPath) ***
         const projectPathParam = params.project_path;
         if (typeof projectPathParam !== 'string') { return { contents: [{ uri: uri.href, text: `Error: Invalid project path type (${typeof projectPathParam}).`, contentType: "text/plain" }], isError: true }; }
-        const projectPath: string = projectPathParam; // Define projectPath
+        const projectPath: string = decodeURIComponent(projectPathParam); // Define projectPath
         if (!projectPath) { return { contents: [{ uri: uri.href, text: "Error: Project path missing.", contentType: "text/plain" }], isError: true }; }
         // *** END DEFINE VARIABLES ***
         console.error(`Resource request: project structure for ${projectPath}`);
@@ -1081,8 +1089,8 @@ except Exception as e:
         // *** DEFINE VARIABLES (like projectPath, pouPath) ***
         const projectPathParam = params.project_path; const pouPathParam = params.pou_path;
         if (typeof projectPathParam !== 'string' || typeof pouPathParam !== 'string') { return { contents: [{ uri: uri.href, text: "Error: Invalid project or POU path type.", contentType: "text/plain" }], isError: true }; }
-        const projectPath: string = projectPathParam; // Define projectPath
-        const pouPath: string = pouPathParam; // Define pouPath
+        const projectPath: string = decodeURIComponent(projectPathParam); // Define projectPath
+        const pouPath: string = decodeURIComponent(pouPathParam); // Define pouPath
         if (!projectPath || !pouPath) { return { contents: [{ uri: uri.href, text: "Error: Project or POU path missing.", contentType: "text/plain" }], isError: true }; }
         // *** END DEFINE VARIABLES ***
         console.error(`Resource request: POU code: Project='${projectPath}', POU='${pouPath}'`);
@@ -1430,10 +1438,8 @@ except Exception as e:
     try {
         const transport = new StdioServerTransport();
         console.error("SERVER.TS: Connecting MCP server via stdio...");
-        // No need to await connect here if startMcpServer is called by bin.ts which awaits it
-        // await server.connect(transport);
-        server.connect(transport); // Connect but don't await here, let bin.ts handle waiting
-        console.error("SERVER.TS: MCP Server connection initiated via stdio.");
+        await server.connect(transport);
+        console.error("SERVER.TS: MCP Server connected via stdio.");
         // console.error("SERVER.TS: server.connect() promise resolved successfully."); // This log might be premature now
     } catch (error) {
         console.error("FATAL: Failed to initiate MCP server connection:", error);

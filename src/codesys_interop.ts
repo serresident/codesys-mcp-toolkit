@@ -65,8 +65,8 @@ export async function executeCodesysScript(
         process.stderr.write(`------ END SCRIPT SNIPPET (TEMP FILE) -----\n`);
         // <<< --- END SCRIPT CONTENT LOGGING --- >>>
 
-        await writeFile(tempFilePath, normalizedScriptContent, 'latin1'); // Write the normalized content
-        process.stderr.write(`INTEROP: Temp script written: ${tempFilePath}\n`);
+        await writeFile(tempFilePath, '# -*- coding: utf-8 -*-\n' + normalizedScriptContent, 'utf8'); // Use utf8 with coding header
+        process.stderr.write(`INTEROP: Temp script written (utf8): ${tempFilePath}\n`);
 
 
         // --- Construct command string for shell: true ---
@@ -101,7 +101,7 @@ export async function executeCodesysScript(
 
             const controller = new AbortController();
             const timeoutSignal = controller.signal;
-            const timeoutDuration = 60000; // 60 seconds
+            const timeoutDuration = 300000; // 300 seconds (5 minutes)
 
             // Pass the single command string, empty args array, and shell: true
             const childProcess = spawn(fullCommandString, [], { // Pass full string, EMPTY args array

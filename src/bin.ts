@@ -34,12 +34,12 @@ program
   .option( // Use options consistently
     '-p, --codesys-path <path>',
     'Path to CODESYS executable (can contain spaces, use quotes if needed)',
-    process.env.CODESYS_PATH || 'C:\\Program Files\\CODESYS 3.5.21.0\\CODESYS\\Common\\CODESYS.exe' // Default AFTER reading env var
+    process.env.CODESYS_PATH || 'C:\\Program Files\\CODESYS 3.5.22.20\\CODESYS\\Common\\CODESYS.exe' // Default AFTER reading env var
   )
   .option(
     '-f, --codesys-profile <profile>', // Changed alias to 'f' to avoid conflict if you add other '-p' options
     'CODESYS profile name (overrides CODESYS_PROFILE env var)',
-    process.env.CODESYS_PROFILE || 'CODESYS V3.5 SP21' // Default AFTER reading env var
+    process.env.CODESYS_PROFILE || 'CODESYS V3.5 SP22' // Default AFTER reading env var
   )
   // Add workspace option if needed, defaults to cwd
    .option(
