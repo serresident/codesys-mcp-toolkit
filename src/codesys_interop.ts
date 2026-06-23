@@ -121,7 +121,7 @@ export async function executeCodesysScript(
             childProcess.stdout.on('data', (data) => {
                 const chunk = data.toString();
                 stdoutData += chunk;
-                process.stderr.write(`INTEROP stdout chunk: ${chunk.length > 50 ? chunk.substring(0, 50) + '...' : chunk}\n`);
+                process.stderr.write(`INTEROP stdout chunk: ${chunk}\n`);
             });
             childProcess.stderr.on('data', (data) => {
                 const chunk = data.toString();

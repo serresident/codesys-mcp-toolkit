@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { executeCodesysScript } = require('./dist/codesys_interop.js');
 
-const scriptContent = fs.readFileSync('./scratch_export.py', 'utf8');
+const scriptContent = fs.readFileSync('./scratch_guids.py', 'utf8');
 const codesysPath = 'C:\\Program Files (x86)\\Abak.IDE.1.0.0\\CODESYS\\Common\\abak.ide.exe';
 const profileName = 'Abak.IDE V1.0.0.0';
 

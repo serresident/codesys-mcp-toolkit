@@ -1,145 +1,186 @@
-
 # @codesys/mcp-toolkit
 
-![npm](https://img.shields.io/npm/v/@codesys/mcp-toolkit)
-![License](https://img.shields.io/github/license/johannesPettersson80/codesys-mcp-toolkit)
-![Node Version](https://img.shields.io/node/v/@codesys/mcp-toolkit)
+MCP-сервер (Model Context Protocol) для сред программирования на базе **CODESYS V3** и **Abak.IDE**. 
 
-A Model Context Protocol (MCP) server for CODESYS V3 programming environments. This toolkit enables seamless interaction between MCP clients (like Claude Desktop) and CODESYS, allowing automation of project management, POU creation, code editing, and compilation tasks via the CODESYS Scripting Engine.
+Этот инструмент обеспечивает бесшовную интеграцию между MCP-клиентами (такими как Claude Desktop, VS Code с поддержкой MCP) и CODESYS, позволяя автоматизировать управление проектами, создание POU, редактирование кода, двустороннюю синхронизацию с Git в виде текстовых файлов и компиляцию проектов через CODESYS Scripting Engine.
 
-## 🌟 Features
+---
 
-- **Project Management**
-  - Open existing CODESYS projects (`open_project`)
-  - Create new projects from standard templates (`create_project`)
-  - Save project changes (`save_project`)
+## 🌟 Возможности
 
-- **POU Management**
-  - Create Programs, Function Blocks, and Functions (`create_pou`)
-  - Set declaration and implementation code (`set_pou_code`)
-  - Create properties for Function Blocks (`create_property`)
-  - Create methods for Function Blocks (`create_method`)
-  - Compile projects (`compile_project`)
+### 📁 Управление проектами
+*   **Открытие проектов (`open_project`)**: Поддерживает как прямые пути к файлу `.project`, так и пути к директориям.
+    *   **Автовыбор последней версии**: Если передан путь к папке, сервер автоматически отсканирует её, отсортирует файлы `.project` по времени изменения и откроет самую последнюю версию.
+*   **Создание проектов (`create_project`)**: Создание нового проекта по стандартным шаблонам.
+*   **Сохранение изменений (`save_project`)**: Сохранение текущего состояния бинарного проекта.
 
-- **MCP Resources**
-  - `codesys://project/status`: Check scripting status and currently open project state.
-  - `codesys://project/{+project_path}/structure`: Retrieve the object structure of a specified project.
-  - `codesys://project/{+project_path}/pou/{+pou_path}/code`: Read the declaration and implementation code for a specified POU, Method, or Property accessor.
+### 📝 Управление POU и кодом
+*   Создание программ (PRG), функциональных блоков (FB) и функций (FUN) (`create_pou`).
+*   Создание свойств (Property) (`create_property`) и методов (Method) (`create_method`) для функциональных блоков.
+*   Чтение и запись кода деклараций и имплементаций POUs (`set_pou_code`).
+*   Компиляция проекта (`compile_project`).
 
-## 📋 Prerequisites
+### 🔄 Интеграция с Git (Двусторонняя текстовая синхронизация)
+*   **Экспорт исходников (`export_project_sources`)**:
+    *   Выгружает всю иерархию объектов приложения CODESYS на диск в виде аккуратной структуры папок.
+    *   Сохраняет объекты в виде файлов Structured Text (`.st`) с типизированными расширениями: `.prg.st`, `.fb.st`, `.func.st`, `.dut.st`, `.gvl.st`, `.method.st`.
+    *   Экспортирует XML-структуру проекта (`project_sources.xml` в формате PLCopen XML) для сохранения метаданных.
+*   **Импорт исходников (`import_project_sources`)**:
+    *   Считывает измененные или новые файлы `.st` на диске и обновляет декларации и код имплементаций соответствующих объектов внутри CODESYS напрямую через API Scripting Engine.
+    *   Автоматически создает новые POUs, папки, методы, свойства, списки глобальных переменных (GVL) и типы данных (DUT) при их появлении на диске.
 
-- **CODESYS V3**: A working CODESYS V3 installation (tested with 3.5 SP21) with the **Scripting Engine** component enabled during installation.
-- **Node.js**: Version 18.0.0 or later is recommended.
-- **MCP Client**: An MCP-enabled application (e.g., Claude Desktop).
+### 🔌 Ресурсы MCP
+*   `codesys://project/status`: Текущий статус соединения со средством разработки и открытый проект.
+*   `codesys://project/{+project_path}/structure`: Получение структуры дерева объектов проекта.
+*   `codesys://project/{+project_path}/pou/{+pou_path}/code`: Быстрое чтение кода конкретного POU, метода или свойства.
 
-*(Note: CODESYS uses Python 2.7 internally for its scripting engine, but this toolkit handles the interaction; you do not need to manage Python separately.)*
+---
 
-## 🚀 Installation
+## 📋 Предварительные требования
 
-The recommended way to install is globally using npm:
+1.  **CODESYS V3** (протестировано на 3.5 SP21) или **Abak.IDE** (протестировано на V1.0.0.0).
+2.  При установке среды разработки должен быть выбран компонент **Scripting Engine** (установлен по умолчанию).
+3.  **Node.js**: Версия 18.0.0 или новее.
+4.  **MCP-клиент**: Например, Claude Desktop или плагины VS Code.
+
+*Примечание: CODESYS использует Python 2.7 внутри встроенного Scripting Engine. Сервер берет всю работу с ним на себя, вам не нужно настраивать Python отдельно.*
+
+---
+
+## 🚀 Установка
+
+Для установки глобально в системе выполните:
 
 ```bash
 npm install -g @codesys/mcp-toolkit
 ```
 
-This installs the package globally, making the `codesys-mcp-tool` command available in your system's terminal PATH.
+Это сделает команду `codesys-mcp-tool` доступной в консоли вашей операционной системы.
 
-*(Advanced users can also install from source for development - see CONTRIBUTING.md if available).*
+---
 
-## 🔧 Configuration (IMPORTANT!)
+## 🔧 Настройка (Конфигурация)
 
-This toolkit needs to know where your CODESYS installation is and which profile to use. Configuration is typically done within your MCP Client application (like Claude Desktop).
+Для работы плагина необходимо указать путь к исполняемому файлу CODESYS/Abak.IDE и имя используемого профиля. Настройка производится в конфигурационном файле вашего MCP-клиента.
 
-### Recommended Configuration Method (Direct Command)
+### Рекомендуемый способ (для Claude Desktop)
 
-Due to potential environment variable issues (especially with `PATH`) when launching Node.js tools via wrappers like `npx` within certain host applications (e.g., Claude Desktop), it is **strongly recommended** to configure your MCP client to run the installed command `codesys-mcp-tool` **directly**.
+Создайте или отредактируйте файл настроек Claude Desktop (`%APPDATA%\Claude\desktop-config\config.json` на Windows):
 
-**Example for Claude Desktop (`settings.json` -> `mcpServers`):**
-
+#### Пример для стандартного CODESYS V3.5:
 ```json
 {
   "mcpServers": {
-    // ... other servers ...
     "codesys_local": {
-      "command": "codesys-mcp-tool", // <<< Use the direct command name
+      "command": "codesys-mcp-tool",
       "args": [
-        // Pass arguments directly to the tool using flags
-        "--codesys-path", "C:\\Program Files\\Path\\To\\Your\\CODESYS\\Common\\CODESYS.exe",
-        "--codesys-profile", "Your CODESYS Profile Name"
-        // Optional: Add --workspace "/path/to/your/projects" if needed
-      ]
-    }
-    // ... other servers ...
-  }
-}
-```
-
-**Key Steps:**
-1.  Replace `"C:\\Program Files\\Path\\To\\Your\\CODESYS\\Common\\CODESYS.exe"` with the **full, correct path** to your specific `CODESYS.exe` file.
-2.  Replace `"Your CODESYS Profile Name"` with the **exact name** of the CODESYS profile you want to use (visible in the CODESYS UI).
-3.  Ensure the `codesys-mcp-tool` command is accessible in the system PATH where the MCP Client application runs. Global installation via `npm install -g` usually handles this.
-4.  Restart your MCP Client application (e.g., Claude Desktop) to apply the settings changes.
-
-### Alternative Configuration (Using `npx` - Not Recommended)
-
-Launching with `npx` has been observed to cause immediate errors (`'C:\Program' is not recognized...`) in some environments, likely due to how `npx` handles the execution environment. **Use the Direct Command method above if possible.** If you must use `npx`:
-
-```json
-// Example using npx (POTENTIALLY PROBLEMATIC - USE WITH CAUTION):
-{
-  "mcpServers": {
-    "codesys_local": {
-      "command": "npx",
-      "args": [
-        "-y", // Tells npx to install temporarily if not found globally
-        "@codesys/mcp-toolkit",
-        // Arguments for the tool MUST come AFTER the package name
-        "--codesys-path", "C:\\Program Files\\Path\\To\\Your\\CODESYS\\Common\\CODESYS.exe",
-        "--codesys-profile", "Your CODESYS Profile Name"
+        "--codesys-path", "C:\\Program Files\\3S CODESYS\\CODESYS\\Common\\CODESYS.exe",
+        "--codesys-profile", "CODESYS V3.5 SP21",
+        "--workspace", "C:\\Users\\ВашеИмя\\CODESYS_Projects"
       ]
     }
   }
 }
 ```
-*(Note: The `--` separator after the package name might sometimes help `npx` but is not guaranteed to fix the environment issue.)*
 
-## 🛠️ Command-Line Arguments
+#### Пример для Abak.IDE:
+```json
+{
+  "mcpServers": {
+    "codesys_local": {
+      "command": "codesys-mcp-tool",
+      "args": [
+        "--codesys-path", "C:\\Program Files (x86)\\Abak.IDE.1.0.0\\CODESYS\\Common\\abak.ide.exe",
+        "--codesys-profile", "Abak.IDE V1.0.0.0",
+        "--workspace", "D:\\Projects\\CEX_15"
+      ]
+    }
+  }
+}
+```
 
-When running `codesys-mcp-tool` directly or configuring it, you can use these arguments:
+> [!IMPORTANT]
+> Настоятельно рекомендуется использовать прямую команду `"command": "codesys-mcp-tool"` вместо `"npx"`. Запуск через `npx` в среде Claude Desktop часто вызывает ошибки путей с пробелами (например, `C:\Program is not recognized`).
 
-*   `-p, --codesys-path <path>`: Full path to `CODESYS.exe`. (Required, overrides `CODESYS_PATH` env var, has a default but relying on it is not recommended).
-*   `-f, --codesys-profile <profile>`: Name of the CODESYS profile. (Required, overrides `CODESYS_PROFILE` env var, has a default but relying on it is not recommended).
-*   `-w, --workspace <dir>`: Workspace directory for resolving relative project paths passed to tools. Defaults to the directory where the command was launched (which might be unpredictable when run by another application). Setting this explicitly might be needed if using relative paths.
-*   `-h, --help`: Show help message.
-*   `--version`: Show package version.
+---
 
-## 🔍 Troubleshooting
+## 🛠️ Аргументы командной строки CLI
 
-*   **`'C:\Program' is not recognized...` error immediately after connection:**
-    *   **Cause:** This typically happens when the tool is launched via `npx` within an environment like Claude Desktop. The execution environment (`PATH` variable) provided to the process likely causes an internal CODESYS command (like running Python) to fail.
-    *   **Solution:** Configure your MCP Client to run the command **directly** (`"command": "codesys-mcp-tool"`) instead of using `"command": "npx"`. See the **Recommended Configuration Method** section above.
+При ручном запуске или настройке `codesys-mcp-tool` принимает следующие флаги:
 
-*   **Tool Fails / Errors in Output:**
-    *   Check the logs from your MCP Client application (e.g., Claude Desktop logs). Look for `INTEROP:` messages or Python `DEBUG:` / `ERROR:` messages printed to stderr from the CODESYS script execution.
-    *   Ensure the `--codesys-path` and `--codesys-profile` arguments passed to the command are correct and point to a valid CODESYS installation with scripting enabled.
-    *   Verify the project paths and object paths you are passing to tools are correct (use forward slashes `/`).
-    *   Make sure no other CODESYS instances are running in conflicting ways (e.g., holding a lock on the profile).
+*   `-p, --codesys-path <path>`: Полный путь к `CODESYS.exe` или `abak.ide.exe`.
+*   `-f, --codesys-profile <profile>`: Точное имя профиля CODESYS (как в ярлыке запуска среды).
+*   `-w, --workspace <dir>`: Базовая рабочая папка для разрешения относительных путей проектов.
+*   `-h, --help`: Вывод справки по аргументам.
 
-*   **`command not found: codesys-mcp-tool`:**
-    *   Ensure the package was installed globally (`npm install -g @codesys/mcp-toolkit`).
-    *   Ensure the npm global bin directory is in your system's `PATH` environment variable. Find it with `npm config get prefix` and add the `bin` subdirectory (or the main directory itself on Windows) to your PATH.
+---
 
-*   **Check Logs:**
-    *   Claude Desktop logs: `C:\Users\<YourUsername>\AppData\Roaming\Claude\logs\` (Windows)
+## 🔄 Текстовый формат объектов (.st)
 
-## 🤝 Contributing
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page. (Optionally add a CONTRIBUTING.md file with more details).
+При экспорте исходного кода для удобства чтения человеком и систем контроля версий (Git) файлы `.st` разбиваются на секции с помощью специальных мета-комментариев:
 
-## 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+```pascal
+// @OBJECT_ID: 4c4237aa-22c6-43a4-ae1d-3ca0359860c2
+// @DECLARATION
+PROGRAM PLC_PRG
+VAR
+    fbElemerREM : fbElemerREM;
+    rCurrentFlowRate : REAL;
+END_VAR
 
-## 🙏 Acknowledgements
-- The CODESYS GmbH team for the powerful CODESYS platform and its scripting engine.
-- The Model Context Protocol project for defining the interaction standard.
-- All contributors and users who help improve this toolkit.
+// @IMPLEMENTATION
+// Сюда помещается исполняемый код программы
+rCurrentFlowRate := fbElemerREM.rFlow;
+```
 
+*   `// @OBJECT_ID`: Содержит уникальный GUID объекта внутри CODESYS. Это позволяет переименовывать или перемещать файлы на диске, сохраняя их прочную связь с объектом в CODESYS.
+*   `// @DECLARATION`: Начало блока объявления переменных.
+*   `// @IMPLEMENTATION`: Начало исполняемого кода Structured Text (для объектов, поддерживающих тело кода, например, POUs, методов и действий). Для GVL и DUT данная секция отсутствует.
+
+---
+
+## 🤖 Работа через ИИ-ассистента Antigravity (Google DeepMind)
+
+Интеграция этого MCP-сервера с ИИ-ассистентом Antigravity позволяет вести разработку в CODESYS / Abak.IDE на естественном языке, делегируя написание, отладку и рефакторинг кода нейросети.
+
+### Рекомендуемый рабочий процесс (Workflow)
+
+1. **Подключение к проекту**:
+   Вы просите ассистента подключиться к вашему проекту, указав путь к папке проекта. Например:
+   > *"Подключись к проекту D:\Projects\CEX_15\апп 511\PLC"*
+   Antigravity автоматически найдет самую свежую версию `.project` файла с помощью встроенного автовыбора и откроет её.
+
+2. **Экспорт исходников**:
+   Ассистент вызывает инструмент `export_project_sources`, чтобы выгрузить все объекты CODESYS (программы, блоки, методы, глобальные переменные и типы данных) в виде текстовых `.st` файлов в рабочей директории.
+   Теперь весь ваш код проекта представлен в виде файлов, которые ассистент может напрямую читать и редактировать.
+
+3. **Редактирование и рефакторинг**:
+   Вы формулируете задачу для ИИ, например:
+   > *"Добавь новый функциональный блок симуляции датчика температуры в папку DevLogic"* или *"Найди ошибку в алгоритме PLC_PRG"*.
+   Antigravity самостоятельно создаст или модифицирует нужные файлы `.st` на диске.
+
+4. **Импорт изменений**:
+   После завершения редактирования ассистент вызывает инструмент `import_project_sources`. Он считывает все изменения из папки исходников и синхронизирует их обратно в бинарный проект CODESYS/Abak.IDE, обновляя код и структуру объектов.
+
+5. **Проверка (Компиляция)**:
+   Ассистент вызывает `compile_project` для запуска компиляции в среде CODESYS, считывает ошибки компиляции, если они возникли, и исправляет их на диске, после чего снова синхронизирует и проверяет.
+
+Благодаря этому циклу вы получаете полноценный Git-контроль изменений исходников и автоматическое написание кода силами ИИ с мгновенной синхронизацией с физической средой программирования CODESYS.
+
+---
+
+## 🔍 Решение проблем (Troubleshooting)
+
+*   **Ошибка: `'C:\Program' is not recognized as an internal or external command`**:
+    *   **Причина:** Попытка запуска сервера через `npx` в сочетании с путями, содержащими пробелы.
+    *   **Решение:** Установите пакет глобально через `npm install -g @codesys/mcp-toolkit` и пропишите в конфигурации Claude Desktop команду `"command": "codesys-mcp-tool"` напрямую.
+*   **Вызовы инструментов завершаются таймаутом**:
+    *   Запуск CODESYS без графического интерфейса (`--noUI`) занимает от 15 до 30 секунд. Первое обращение к проекту может выполняться долго. Убедитесь, что таймаут в вашем MCP-клиенте настроен с запасом (рекомендуется не менее 60 секунд).
+*   **Где посмотреть логи**:
+    *   Claude Desktop пишет подробный лог работы MCP-серверов в файл `%APPDATA%\Claude\logs\mcp.log`. Там можно увидеть сообщения от interop-модуля и скриптов Python.
+
+---
+
+## 📝 Лицензия
+
+Этот проект распространяется под лицензией MIT. Подробности см. в файле `LICENSE`.
