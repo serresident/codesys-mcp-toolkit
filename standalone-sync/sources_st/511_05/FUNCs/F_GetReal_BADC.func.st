@@ -33,6 +33,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 
 pSrc    := ADR(pBuf^[0]);

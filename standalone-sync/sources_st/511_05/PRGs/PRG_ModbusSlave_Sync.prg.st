@@ -33,6 +33,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // 1. Инициализация и расчет длин (через SIZEOF, чтобы не зависеть от типов)
 IF xFirstLoop THEN

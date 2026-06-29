@@ -11,6 +11,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // Очистка буфера для нового измерения
 sBuffer := CONCAT(sMeasurement, ',');

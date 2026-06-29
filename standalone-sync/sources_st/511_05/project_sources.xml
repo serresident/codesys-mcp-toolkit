@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="" productName="Abak.IDE" productVersion="Abak.IDE V1.0.0.0" creationDateTime="2026-06-29T13:49:17.1967316" />
-  <contentHeader name="abak_app511_10v 0.0.5.project" modificationDateTime="2026-06-29T10:17:52.4593439">
+  <fileHeader companyName="" productName="Abak.IDE" productVersion="ABAK.IDE V1.0.0.0" creationDateTime="2026-06-29T19:45:06.7531386" />
+  <contentHeader name="abak_app511_10v 0.0.5.project" modificationDateTime="2026-06-29T16:35:02.3901157">
     <coordinateInfo>
       <fbd>
         <scaling x="1" y="1" />
@@ -1969,6 +1969,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -2018,6 +2019,7 @@ VAR_INPUT
 END_VAR
 VAR
 END_VAR
+
 
 
 
@@ -2231,6 +2233,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -2435,6 +2438,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -2506,6 +2510,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -2544,6 +2549,7 @@ VAR_INPUT
 END_VAR
 VAR
 END_VAR
+
 
 
 
@@ -2736,6 +2742,7 @@ VAR
     C_INPUT_REG_START   : WORD := 1;
     C_HOLD_REG_START    : WORD := 1000;
 END_VAR
+
 
 
 
@@ -3231,6 +3238,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -3470,6 +3478,7 @@ END_VAR
 
 
 
+
 </xhtml>
                     </InterfaceAsPlainText>
                     <addData />
@@ -3504,6 +3513,7 @@ VAR
     pOutReal        : POINTER TO REAL;  // Ссылка на выходную переменную REAL
     
 END_VAR
+
 
 
 
@@ -3654,6 +3664,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -3794,6 +3805,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -3909,6 +3921,7 @@ END_VAR
 VAR_OUTPUT
 	VAL_OUT : REAL;
 END_VAR
+
 
 
 
@@ -4054,6 +4067,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -4153,6 +4167,7 @@ VAR
     wTemp2   : WORD;
     pReal    : POINTER TO REAL; (* Указатель для копирования памяти *)
 END_VAR
+
 
 
 
@@ -4279,6 +4294,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -4386,6 +4402,7 @@ VAR
     uiPort : UINT := 8089; // Influx port
 	sParam:STRING(200);
 END_VAR
+
 
 
 
@@ -4527,6 +4544,7 @@ END_VAR
 
 
 
+
 </xhtml>
                     </InterfaceAsPlainText>
                     <addData />
@@ -4603,6 +4621,7 @@ END_VAR
 
 
 
+
 </xhtml>
                     </InterfaceAsPlainText>
                     <addData />
@@ -4638,6 +4657,7 @@ END_VAR
 
 
 
+
 </xhtml>
                     </InterfaceAsPlainText>
                     <addData />
@@ -4659,6 +4679,7 @@ END_VAR
 VAR
     iCurrentLen  : INT;          // Current length of sBuffer
 END_VAR
+
 
 
 
@@ -4878,6 +4899,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -4934,6 +4956,7 @@ END_VAR
 VAR_OUTPUT
     xOutControl  : BOOL; 
 END_VAR
+
 
 
 
@@ -5342,6 +5365,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -5420,6 +5444,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -5484,6 +5509,7 @@ END_VAR
 VAR
     dw : DWORD;
 	END_VAR
+
 
 
 
@@ -5713,6 +5739,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -5921,6 +5948,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -5985,6 +6013,11 @@ fbSteamControl_511(
     rTempActual   := GVL.gInputRegs.rTempApp511,  // Текущая температура из аппарата 511 [3, 4]
     rSetpoint     := rTempSetpoint_511,           // Уставка температуры (до 100 °C) [5, 6]
     xReset        := xResetTempPID,               // Сброс ПИД
+    rKp           := GVL.gHoldingRegs.rKp_Steam_511,
+    rTn           := GVL.gHoldingRegs.rTn_Steam_511,
+    rTv           := GVL.gHoldingRegs.rTv_Steam_511,
+    rLimitLow     := 0.0,
+    rLimitHigh    := 100.0,
     
     // IN_OUT переменные (передаются по ссылке напрямую)
     rValveOut     := GVL.gHoldingRegs.rAutoSet_Steam, // Запись выхода ПИД в авто-задание клапана пара [1, 2]
@@ -6014,6 +6047,7 @@ VAR
     // Промежуточная переменная для связи флагов режима
     xSteamAutoMode     : BOOL;  // TRUE = АВТО, FALSE = РУЧНОЙ
 END_VAR
+
 
 
 
@@ -6205,6 +6239,11 @@ fbSteamControl(
     rTempActual   := rTempActual,
     rSetpoint     := rTargetTemp,
     xReset        := FALSE,
+    rKp           := rKp,
+    rTn           := rTn,
+    rTv           := rTv,
+    rLimitLow     := 0.0,
+    rLimitHigh    := 100.0,
     rValveOut     := rValveOut,
     xAutoModeCmd  := xAutoModeCmd
 );</xhtml>
@@ -6240,6 +6279,7 @@ VAR
     xOldStart      : BOOL;  // Память сигнала запуска
     xEnablePID     : BOOL;  // Внутренний сигнал работы пид-регулятора
 END_VAR
+
 
 
 
@@ -6308,6 +6348,7 @@ VAR
     // Вспомогательная переменная для связи флагов режима клапана
     xSteamAutoMode  : BOOL; 
 END_VAR
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -6746,6 +6787,7 @@ END_VAR
 
 
 
+
 </xhtml>
                   </InterfaceAsPlainText>
                 </data>
@@ -6802,6 +6844,12 @@ fbCascadeDrain511(
     rZeroFlowThreshold := GVL.gHoldingRegs.rZeroFlowThreshold_511, 
     tEmptyDelay        := UDINT_TO_TIME(UINT_TO_UDINT(GVL.gHoldingRegs.uiEmptyDelaySec_511) * 1000), 
     
+    // Настройки ПИД
+    rKp_Diazo          := GVL.gHoldingRegs.rKp_Diazo_511,
+    rTn_Diazo          := GVL.gHoldingRegs.rTn_Diazo_511,
+    rKp_pH             := GVL.gHoldingRegs.rKp_pH_511,
+    rTn_pH             := GVL.gHoldingRegs.rTn_pH_511,
+
     // Прямая связь с авто-заданиями физических клапанов (IN_OUT)
     rValveOutDiazo     := GVL.gHoldingRegs.rAutoSet_Diazo,     // [3]
     xAutoModeCmdDiazo  := xDiazoAutoMode,
@@ -6838,6 +6886,7 @@ VAR
     xDiazoAutoMode    : BOOL;
     xSodaAutoMode     : BOOL;
 END_VAR
+
 
 
 

@@ -31,6 +31,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 //берем  с модуля  M1_K3_AI_10_08_00 значения  и  копируем в промежуточный буфер   
 SysMemCpy(ADR(buff_abak), ADR( %IW0), 8 * SIZEOF(WORD));

@@ -24,6 +24,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // --- 1. ОДНОКРАТНАЯ ИНИЦИАЛИЗАЦИЯ (Привязка адресов) ---
 IF NOT xInitDone THEN

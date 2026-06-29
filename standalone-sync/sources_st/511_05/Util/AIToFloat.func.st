@@ -14,6 +14,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 AIToFloat:=(UINT_TO_REAL(In)-10000.0)/40000.0*Hi+Lo;
 //AIToFloat:=(UINT_TO_REAL(In)-0.0)/50000.0*Hi+Lo;

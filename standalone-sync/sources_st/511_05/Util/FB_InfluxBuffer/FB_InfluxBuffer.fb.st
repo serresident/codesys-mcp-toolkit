@@ -22,6 +22,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // Initialization: Clear buffer and add Measurement + Tag
 // Format: "Measurement,TagKey=TagValue " (note the space at the end)

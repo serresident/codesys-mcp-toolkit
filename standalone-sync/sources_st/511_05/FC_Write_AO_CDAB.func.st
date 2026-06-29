@@ -22,6 +22,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // 1. Линейное масштабирование (Scale)
 // Формула: Out = ((In - InMin) * (OutMax - OutMin) / (InMax - InMin)) + OutMin

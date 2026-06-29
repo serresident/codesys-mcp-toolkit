@@ -22,6 +22,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // Компактная реализация в одну строку с помощью SEL
 xOutControl := SEL(xMode, xManControl, xAutoControl);

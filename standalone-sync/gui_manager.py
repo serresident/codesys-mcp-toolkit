@@ -426,6 +426,61 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.tabs.addTab(self.tab_git, "🌿 Git Версионирование")
 
+        # Tab 3: Help & Manual
+        self.tab_help = QtWidgets.QWidget()
+        lay_tab_help = QtWidgets.QVBoxLayout(self.tab_help)
+        lay_tab_help.setContentsMargins(10, 10, 10, 10)
+        self.txt_help = QtWidgets.QTextBrowser()
+        self.txt_help.setOpenExternalLinks(True)
+        lay_tab_help.addWidget(self.txt_help)
+        self.tabs.addTab(self.tab_help, "❓ Справка")
+        self.load_help_content()
+
+    def load_help_content(self):
+        help_html = """
+        <h1 style="color:#00f0ff; margin-bottom:5px;">Справка и Инструкция по использованию</h1>
+        <p style="color:#a1a1aa;">CODESYS Git Sync & Version Control Manager — инструмент для двусторонней синхронизации и контроля версий проектов CODESYS V3 / Abak.IDE с текстовыми файлами Structured Text (ST).</p>
+        <hr style="border: 0; border-top: 1px solid #2d2d34; margin: 15px 0;">
+
+        <h2 style="color:#3b82f6; margin-top:15px;">🔄 Двусторонняя синхронизация (Export & Import)</h2>
+        <p>Для переноса кода между бинарным проектом <code>.project</code> и текстовыми исходными файлами <code>.st</code> используются две основные команды:</p>
+        <ul>
+            <li><b>⬇ Экспорт исходников (Export)</b>: Считывает код всех программ, функциональных блоков, глобальных переменных (GVL) и структур данных (DUT) из проекта CODESYS и сохраняет их в папку исходников в виде структурированных текстовых файлов. Выполняйте экспорт каждый раз после редактирования проекта в среде Abak.IDE, чтобы сохранить изменения в Git.</li>
+            <li><b>⬆ Импорт изменений (Import)</b>: Загружает измененные текстовые файлы <code>.st</code> обратно в бинарный проект CODESYS. Выполняйте импорт после того, как вы отредактировали файлы во внешнем редакторе (например, VS Code) или стянули новую версию из Git.</li>
+        </ul>
+
+        <h2 style="color:#f59e0b; margin-top:20px;">🔒 Ограничения блокировки проектов (Запущенная Abak.IDE)</h2>
+        <blockquote style="background-color:#271c11; border-left:4px solid #f59e0b; padding:10px; margin:10px 0; border-radius:4px;">
+            <b>ВАЖНО:</b> CODESYS/Abak.IDE блокирует файл проекта на запись (создается файл с расширением <code>.project.~u</code>), когда он открыт в графической среде. Из-за этого фоновые скрипты экспорта/импорта/компиляции не могут получить доступ к проекту.
+        </blockquote>
+        <p><b>Рекомендуемый рабочий процесс при запущенной IDE:</b></p>
+        <ol>
+            <li>Закончили редактировать логику в Abak.IDE? Нажмите <b>Сохранить</b> (Ctrl+S).</li>
+            <li>В меню выберите <b>Файл -> Закрыть проект</b> (среда останется открытой, но блокировка с файла проекта снимется).</li>
+            <li>В этой утилите нажмите <b>Экспорт</b> или <b>Импорт</b>.</li>
+            <li>Вернитесь в Abak.IDE и откройте проект заново из списка недавних.</li>
+        </ol>
+
+        <h2 style="color:#7c3aed; margin-top:20px;">🔨 Тест компиляции (Compile Check)</h2>
+        <p>Кнопка <b>Запустить тест компиляции</b> запускает сборку проекта в фоновом режиме без открытия графического интерфейса. Результаты компиляции, включая количество ошибок и предупреждений, будут выведены во вкладку <i>Лог выполнения</i>. Рекомендуется запускать проверку компиляции после каждого импорта изменений.</p>
+
+        <h2 style="color:#10b981; margin-top:20px;">🌿 Управление версиями (Git)</h2>
+        <p>Вкладка <b>Git Версионирование</b> позволяет отслеживать изменения и фиксировать их в репозитории:</p>
+        <ul>
+            <li><b>Список файлов</b>: Показывает текущий статус файлов в папке исходников. Статусы:
+                <ul>
+                    <li><code>[M]</code> — Файл изменен (Modified).</li>
+                    <li><code>[??]</code> — Новый неотслеживаемый файл (Untracked).</li>
+                    <li><code>[D]</code> — Файл удален (Deleted).</li>
+                </ul>
+            </li>
+            <li><b>Просмотр Diff</b>: При выборе файла из списка справа отобразится подробное сравнение изменений (<span style="color:#10b981;">зеленый цвет</span> — добавленные строки, <span style="color:#ef4444;">красный цвет</span> — удаленные).</li>
+            <li><b>Создание коммита</b>: Введите краткое описание изменений в поле <i>Сообщение коммита</i> и нажмите кнопку <b>Зафиксировать (Commit)</b>. Все изменения будут автоматически добавлены (git add) и зафиксированы.</li>
+            <li><b>Push & Pull</b>: Синхронизируйте ваш локальный репозиторий с удаленным сервером (GitHub/GitLab/локальный сервер) в один клик.</li>
+        </ul>
+        """
+        self.txt_help.setHtml(help_html)
+
     # --- Config Management ---
     def load_config(self):
         default_codesys = 'C:\\Program Files (x86)\\Abak.IDE.1.0.0\\CODESYS\\Common\\abak.ide.exe'
@@ -511,7 +566,49 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_git_push.setEnabled(enabled)
         self.btn_git_pull.setEnabled(enabled)
 
+    def resolve_project_path(self, provided):
+        if os.path.isdir(provided):
+            project_files = []
+            try:
+                for file in os.listdir(provided):
+                    if file.endswith('.project'):
+                        fpath = os.path.join(provided, file)
+                        project_files.append((fpath, os.path.getmtime(fpath)))
+                project_files.sort(key=lambda x: x[1], reverse=True)
+                if project_files:
+                    return project_files[0][0]
+            except:
+                pass
+        return provided
+
+    def is_project_locked(self):
+        proj_path = self.txt_project_path.text().strip()
+        resolved = self.resolve_project_path(proj_path)
+        if resolved and os.path.exists(resolved):
+            lock_file = resolved + ".~u"
+            return os.path.exists(lock_file)
+        return False
+
+    def check_lock_and_warn(self):
+        if self.is_project_locked():
+            reply = QtWidgets.QMessageBox.warning(
+                self,
+                "Проект заблокирован / открыт",
+                "Внимание: Обнаружен файл блокировки (проект открыт в Abak.IDE).\n\n"
+                "Выполнение фонового импорта/экспорта/компиляции при запущенной среде "
+                "может завершиться ошибкой (блокировка доступа) или привести к потере несохраненных данных.\n\n"
+                "Рекомендуется сохранить изменения и закрыть проект в Abak.IDE.\n\n"
+                "Продолжить выполнение все равно?",
+                QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+                QtWidgets.QMessageBox.StandardButton.No
+            )
+            return reply == QtWidgets.QMessageBox.StandardButton.Yes
+        return True
+
     def run_sync_action(self, action):
+        if not self.check_lock_and_warn():
+            return
+            
         self.save_config()
         self.tabs.setCurrentIndex(0) # Switch to logs console
         self.txt_console.clear()
@@ -545,6 +642,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # --- Compilation Test via Python script engine in CODESYS ---
     def run_compile_check(self):
+        if not self.check_lock_and_warn():
+            return
+            
         self.save_config()
         self.tabs.setCurrentIndex(0)
         self.txt_console.clear()

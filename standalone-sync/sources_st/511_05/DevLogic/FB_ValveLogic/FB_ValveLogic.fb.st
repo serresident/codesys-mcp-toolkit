@@ -34,6 +34,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 // 1. Проверка инициализации основного выходного указателя
 IF pOutReal = 0 THEN

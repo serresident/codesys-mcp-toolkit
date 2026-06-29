@@ -50,6 +50,7 @@ END_VAR
 
 
 
+
 // @IMPLEMENTATION
 IF NOT bFirstLoop THEN
 	fbSlv.IsVirtualModbus := 0;

@@ -15,6 +15,7 @@ VAR
 
 
 
+
 // @IMPLEMENTATION
 IF pBuf <> 0 THEN
     // Склеиваем два WORD в один DWORD (старшее слово сдвигаем на 16 бит влево)
