@@ -19,6 +19,8 @@ def main():
     parser = argparse.ArgumentParser(description="CODESYS IPC Sync CLI Client")
     parser.add_argument("--action", required=True, choices=["export", "import", "compile", "stop"], help="Action to perform")
     parser.add_argument("--sources", help="Custom path to ST sources directory")
+    parser.add_argument("--add-context", action="store_true", default=True, help="Add server and context folder during export (default: True)")
+    parser.add_argument("--no-context", dest="add_context", action="store_false", help="Do not add server and context folder during export")
     args = parser.parse_args()
 
     action = args.action
@@ -50,7 +52,8 @@ def main():
     # Write request file
     req_data = {
         "action": action,
-        "sources_path": sources_path
+        "sources_path": sources_path,
+        "add_context": args.add_context
     }
     
     try:
