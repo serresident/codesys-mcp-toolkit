@@ -1,0 +1,9 @@
+// @OBJECT_ID: 731e7745-b82f-47eb-ba89-92034cdd1c59
+// @DECLARATION
+TYPE E_InfluxType :
+(
+    REAL_TYPE,
+    INT_TYPE,
+    BOOL_TYPE
+);
+END_TYPE

@@ -1,2 +1,2 @@
 @echo off
-python manager.py
+python gui_manager.py
