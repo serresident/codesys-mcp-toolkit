@@ -600,6 +600,18 @@ def handle_request(req):
         run_import(proj, sources_path)
     elif action == "compile":
         run_compile(proj)
+    elif action == "login":
+        apps = proj.find("Application", True)
+        if not apps:
+            raise Exception("Application node not found")
+        app = apps[0]
+        try:
+            import scriptengine
+            online_app = scriptengine.online.create_online_application(app)
+            online_app.login(scriptengine.OnlineChangeOption.Try, True)
+            print("Login requested.")
+        except Exception as e:
+            raise Exception("Login failed: " + str(e))
     elif action == "ping":
         print("Ping received. IPC Listener is active.")
         # Do nothing, just return success

@@ -296,6 +296,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.btn_run_script.clicked.connect(self.run_script_only)
         status_layout.addWidget(self.btn_run_script)
 
+        self.btn_stop_script = QtWidgets.QPushButton("🛑 Остановить скрипт IPC")
+        self.btn_stop_script.setObjectName("btn_browse")
+        self.btn_stop_script.clicked.connect(self.stop_script_only)
+        status_layout.addWidget(self.btn_stop_script)
+
+        self.btn_login = QtWidgets.QPushButton("🔌 Подключиться (Online -> Login)")
+        self.btn_login.setObjectName("btn_browse")
+        self.btn_login.clicked.connect(self.login_only)
+        status_layout.addWidget(self.btn_login)
+
         sidebar_layout.addWidget(grp_status)
 
         grp_actions = QtWidgets.QGroupBox("Синхронизация через IPC")
@@ -587,6 +597,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.write_log(f"<span style='color:#ef4444;'>Ошибка запуска: {e}</span>")
 
     def run_script_only(self):
+        QtWidgets.QMessageBox.information(
+            self,
+            "Настройка автозапуска (Важно!)",
+            "Внимание: для мгновенного внедрения скрипта в Abak.IDE должна быть настроена горячая клавиша!\n\n"
+            "1. В открытом Abak.IDE перейдите: Инструменты -> Кастомизация -> Клавиатура\n"
+            "2. Найдите: Скрипты -> Выполнить скрипт...\n"
+            "3. Назначьте комбинацию: Ctrl+Shift+F7\n\n"
+            "Если эта настройка не выполнена, автоматизация не сработает и скрипт не запустится."
+        )
+
         curr_dir = os.path.dirname(os.path.abspath(__file__))
         script_path = os.path.join(curr_dir, "ipc_listener.py")
         automation_script = os.path.join(curr_dir, "attach_ipc_script.py")
@@ -596,10 +616,29 @@ class MainWindow(QtWidgets.QMainWindow):
         
         try:
             subprocess.Popen(cmd, shell=True)
-            self.write_log(f"<span style='color:#00f0ff;'>Попытка внедрения скрипта в открытый Abak.IDE...</span>\nКоманда: {cmd}")
-            self.write_log("<span style='color:#a1a1aa;'>Пожалуйста, не трогайте мышь и клавиатуру в течение 2-х секунд!</span>")
+            self.write_log(f"<span style='color:#00f0ff;'>Попытка внедрения скрипта через горячую клавишу (Ctrl+Shift+F7)...</span>\nКоманда: {cmd}")
         except Exception as e:
             self.write_log(f"<span style='color:#ef4444;'>Ошибка запуска: {e}</span>")
+
+    def stop_script_only(self):
+        req_data = {"action": "stop", "sources_path": "", "add_context": False}
+        try:
+            with open(req_path, "w", encoding="utf-8") as f:
+                json.dump(req_data, f)
+            self.write_log("<span style='color:#f59e0b;'>Отправлена команда остановки скрипта IPC.</span>")
+            self.lbl_script_status.setText("Скрипт IPC: Остановлен 🔴")
+            self.lbl_script_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+        except Exception as e:
+            self.write_log(f"<span style='color:#ef4444;'>Ошибка остановки скрипта: {e}</span>")
+
+    def login_only(self):
+        req_data = {"action": "login", "sources_path": "", "add_context": False}
+        self.write_log("<span style='color:#10b981;'>Отправлен запрос на онлайн-подключение (Логин)...</span>")
+        try:
+            with open(req_path, "w", encoding="utf-8") as f:
+                json.dump(req_data, f)
+        except Exception as e:
+            self.write_log(f"<span style='color:#ef4444;'>Ошибка отправки команды логина: {e}</span>")
 
     def check_environment_status(self):
         # 1. Check IDE process
@@ -954,9 +993,9 @@ class MainWindow(QtWidgets.QMainWindow):
         <h2 style="color:#3b82f6; margin-top:15px;">🚀 Как запустить рабочий процесс</h2>
         <ol>
             <li>Запустите среду разработки <b>Abak.IDE</b> и откройте ваш рабочий проект.</li>
-            <li>В меню выберите: <b>Инструменты -> Скрипты -> Выполнить файл скрипта...</b> (Tools -> Scripting -> Run Script).</li>
-            <li>Выберите файл скрипта сервера: <code>standalone-sync-ipc/ipc_listener.py</code>. Нажмите "Открыть". На панели сообщений CODESYS появится текст <i>"CODESYS IPC Server Listener is running..."</i>.</li>
+            <li><b>ВАЖНО:</b> Настройте горячую клавишу в Abak.IDE для автоматизации. Перейдите в <b>Инструменты -> Кастомизация -> Клавиатура</b>. Найдите категорию <b>Скрипты</b>, выберите <b>Выполнить скрипт...</b> и назначьте <b>Ctrl+Shift+F7</b>.</li>
             <li>Запустите это приложение с помощью скрипта <code>manage_ipc.bat</code>.</li>
+            <li>Нажмите кнопку <b>«▶ Запустить скрипт IPC»</b> в левом меню менеджера. Приложение мгновенно свяжется со средой. (В качестве альтернативы, можно запустить файл <code>standalone-sync-ipc/ipc_listener.py</code> в среде вручную).</li>
         </ol>
 
         <h2 style="color:#f59e0b; margin-top:20px;">⚡ Мгновенная синхронизация</h2>
