@@ -469,7 +469,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if os.path.exists(dir_path):
             try:
                 import subprocess
-                subprocess.Popen(["code", dir_path], shell=True)
+                user_home = os.path.expanduser("~")
+                antigravity_path = os.path.join(user_home, "AppData", "Local", "Programs", "Antigravity IDE", "Antigravity IDE.exe")
+                if os.path.exists(antigravity_path):
+                    subprocess.Popen(f'start "" "{antigravity_path}" "{dir_path}"', shell=True)
+                else:
+                    subprocess.Popen(f'start "" code "{dir_path}"', shell=True)
             except Exception as e:
                 self.write_log(f"<span style='color:#ef4444;'>Не удалось открыть в IDE: {e}</span>")
         else:

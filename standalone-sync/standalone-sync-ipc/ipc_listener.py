@@ -10,6 +10,7 @@ import json
 import traceback
 import tempfile
 import shutil
+import hashlib
 import scriptengine as script_engine
 from scriptengine import PouType
 
@@ -234,8 +235,40 @@ def find_or_create_folder_path(root_node, path_parts):
         current = found
     return current
 
+def get_file_hash(filepath):
+    try:
+        with open(filepath, 'rb') as f:
+            content = f.read()
+        return hashlib.md5(content).hexdigest()
+    except Exception as e:
+        print("DEBUG: Hash error for %s: %s" % (filepath, e))
+        return None
+
+def generate_export_cache(EXPORT_DIR_PATH):
+    cache_path = os.path.join(EXPORT_DIR_PATH, ".context", "sync_cache.json")
+    context_dir = os.path.dirname(cache_path)
+    if not os.path.exists(context_dir):
+        os.makedirs(context_dir)
+        
+    cache = {}
+    for root, dirs, files in os.walk(EXPORT_DIR_PATH):
+        if ".context" in dirs:
+            dirs.remove(".context")
+        for file in files:
+            if file.endswith('.st'):
+                filepath = os.path.join(root, file)
+                rel_key = os.path.relpath(filepath, EXPORT_DIR_PATH).replace('\\', '/')
+                h = get_file_hash(filepath)
+                if h:
+                    cache[rel_key] = h
+                    
+    with open(cache_path, "w") as f:
+        json.dump(cache, f, indent=4)
+    print("DEBUG: Generated export cache with %d entries." % len(cache))
+
 def write_project_context(proj, EXPORT_DIR_PATH):
     context_dir = os.path.join(EXPORT_DIR_PATH, ".context")
+    print("DEBUG: Creating context folder: %s" % context_dir)
     if not os.path.exists(context_dir):
         os.makedirs(context_dir)
         
@@ -256,6 +289,8 @@ def write_project_context(proj, EXPORT_DIR_PATH):
 - **Среда разработки**: Abak.IDE V1.0.0 (CODESYS V3.5)
 - **Целевой язык**: Structured Text (.st)
 - **Инструмент синхронизации**: File IPC (Inter-Process Communication)
+- **PLCopen XML Резервная копия**: `.context/project_sources.xml` (стандартизированный, машиночитаемый формат всей структуры проекта)
+- **Кэш изменений файлов**: `.context/sync_cache.json` (сохраняет хэши экспортированных/импортированных файлов для инкрементальной синхронизации)
 
 ## Как запустить работу с проектом
 Этот каталог содержит все необходимые скрипты для обеспечения мгновенной синхронизации с открытой средой разработки:
@@ -274,19 +309,36 @@ def write_project_context(proj, EXPORT_DIR_PATH):
     
     with open(context_md_path, "wb") as f:
         f.write(to_utf8(context_content))
+    print("DEBUG: Wrote context.md to %s" % context_md_path)
         
+    # Copy project_sources.xml
+    xml_src = os.path.join(EXPORT_DIR_PATH, "project_sources.xml")
+    xml_dst = os.path.join(context_dir, "project_sources.xml")
+    if os.path.exists(xml_src):
+        try:
+            shutil.copy2(xml_src, xml_dst)
+            print("Copied project_sources.xml to context.")
+        except Exception as e:
+            print("WARN: Failed to copy project_sources.xml to context: %s" % e)
+    else:
+        print("DEBUG: project_sources.xml not found at %s" % xml_src)
+
     # Copy tools
     tools_dir = None
     try:
         tools_dir = os.path.dirname(os.path.abspath(__file__))
-    except:
-        pass
+    except Exception as e:
+        print("DEBUG: Could not get __file__ directory: %s" % e)
+        
+    print("DEBUG: Initial tools_dir from __file__: %s" % tools_dir)
     if not tools_dir or not os.path.exists(os.path.join(tools_dir, "ipc_listener.py")):
         # fallback
         workspace_dir = os.path.dirname(os.path.dirname(EXPORT_DIR_PATH))
         tools_dir = os.path.join(workspace_dir, "standalone-sync-ipc")
+        print("DEBUG: Fallback tools_dir from EXPORT_DIR_PATH: %s" % tools_dir)
         
     if os.path.exists(tools_dir):
+        print("DEBUG: Tools directory found at: %s. Copying files..." % tools_dir)
         files_to_copy = ["ipc_listener.py", "gui_manager_ipc.py", "sync_ipc_cli.py", "manage_ipc.bat", "README_IPC.md"]
         for fname in files_to_copy:
             src_file = os.path.join(tools_dir, fname)
@@ -297,6 +349,10 @@ def write_project_context(proj, EXPORT_DIR_PATH):
                     print("Copied tool to context: %s" % fname)
                 except Exception as e:
                     print("WARN: Failed to copy %s: %s" % (fname, e))
+            else:
+                print("DEBUG: Source file does not exist: %s" % src_file)
+    else:
+        print("WARN: Tools directory not found: %s" % tools_dir)
 
 def run_export(proj, EXPORT_DIR_PATH, add_context=False):
     print("Exporting PLCopen XML to folder...")
@@ -319,12 +375,30 @@ def run_export(proj, EXPORT_DIR_PATH, add_context=False):
             except Exception as e:
                 print("WARN: Failed to write context directory: %s" % e)
                 
+        # Generate and save sync cache for exported files
+        try:
+            generate_export_cache(EXPORT_DIR_PATH)
+        except Exception as e:
+            print("WARN: Failed to generate export cache: %s" % e)
+                
         print("SCRIPT_SUCCESS: All sources exported successfully.")
     else:
         raise Exception("Application node not found in project")
 
 def run_import(proj, IMPORT_DIR_PATH):
     print("Starting ST files import...")
+    
+    # Load cache
+    cache_path = os.path.join(IMPORT_DIR_PATH, ".context", "sync_cache.json")
+    cache = {}
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r") as f:
+                cache = json.load(f)
+            print("Loaded sync cache from .context (%d entries)." % len(cache))
+        except Exception as e:
+            print("DEBUG: Failed to load sync cache: %s" % e)
+            
     guid_to_obj = {}
     for obj in proj.get_children(True):
         try:
@@ -339,6 +413,8 @@ def run_import(proj, IMPORT_DIR_PATH):
     
     st_files = []
     for root, dirs, files in os.walk(IMPORT_DIR_PATH):
+        if ".context" in dirs:
+            dirs.remove(".context")
         for file in files:
             if file.endswith('.st'):
                 st_files.append(os.path.join(root, file))
@@ -349,7 +425,19 @@ def run_import(proj, IMPORT_DIR_PATH):
         return 0
     st_files.sort(key=sort_key)
     
+    updated_count = 0
+    new_cache = {}
+    
     for filepath in st_files:
+        rel_key = os.path.relpath(filepath, IMPORT_DIR_PATH).replace('\\', '/')
+        h = get_file_hash(filepath)
+        
+        # Check cache
+        if h and cache.get(rel_key) == h:
+            # File is unchanged
+            new_cache[rel_key] = h
+            continue
+            
         guid, decl, impl = parse_st_file(filepath)
         filename = os.path.basename(filepath)
         
@@ -367,12 +455,32 @@ def run_import(proj, IMPORT_DIR_PATH):
         if guid and guid in guid_to_obj:
             obj = guid_to_obj[guid]
             
+        obj_modified = False
         if obj:
-            print("Syncing code for existing object: %s (%s)" % (obj_name, guid))
-            if hasattr(obj, 'textual_declaration') and obj.textual_declaration:
-                obj.textual_declaration.replace(decl)
-            if impl is not None and hasattr(obj, 'textual_implementation') and obj.textual_implementation:
-                obj.textual_implementation.replace(impl)
+            # Check if actual text changed before replacing (double check)
+            current_decl = obj.textual_declaration.text if hasattr(obj, 'textual_declaration') and obj.textual_declaration else ""
+            current_impl = obj.textual_implementation.text if hasattr(obj, 'textual_implementation') and obj.textual_implementation else None
+            
+            # Normalize newlines for comparison
+            normalized_decl = decl.replace('\r\n', '\n').replace('\r', '\n').strip()
+            normalized_curr_decl = current_decl.replace('\r\n', '\n').replace('\r', '\n').strip()
+            
+            decl_changed = normalized_decl != normalized_curr_decl
+            impl_changed = False
+            if impl is not None and current_impl is not None:
+                normalized_impl = impl.replace('\r\n', '\n').replace('\r', '\n').strip()
+                normalized_curr_impl = current_impl.replace('\r\n', '\n').replace('\r', '\n').strip()
+                impl_changed = normalized_impl != normalized_curr_impl
+            elif impl is not None or current_impl is not None:
+                impl_changed = True
+                
+            if decl_changed or impl_changed:
+                print("Syncing code for existing object: %s (%s)" % (obj_name, guid))
+                if hasattr(obj, 'textual_declaration') and obj.textual_declaration:
+                    obj.textual_declaration.replace(decl)
+                if impl is not None and hasattr(obj, 'textual_implementation') and obj.textual_implementation:
+                    obj.textual_implementation.replace(impl)
+                obj_modified = True
         else:
             print("Creating new object: %s (Type: %s)" % (obj_name, ext))
             
@@ -425,18 +533,39 @@ def run_import(proj, IMPORT_DIR_PATH):
                     new_obj.textual_implementation.replace(impl)
                 guid_to_obj[str(new_obj.guid)] = new_obj
                 print("Created successfully: %s" % obj_name)
+                obj_modified = True
                 
-    print("Saving project changes...")
-    proj.save()
-    print("SCRIPT_SUCCESS: Sync completed successfully.")
+        if obj_modified:
+            updated_count += 1
+            new_cache[rel_key] = get_file_hash(filepath)
+        else:
+            new_cache[rel_key] = h
+            
+    if updated_count > 0:
+        print("Saving project changes (%d files updated)..." % updated_count)
+        proj.save()
+        
+        # Save updated cache
+        context_dir = os.path.join(IMPORT_DIR_PATH, ".context")
+        if not os.path.exists(context_dir):
+            os.makedirs(context_dir)
+        try:
+            with open(cache_path, "w") as f:
+                json.dump(new_cache, f, indent=4)
+            print("Saved sync cache to .context/sync_cache.json.")
+        except Exception as e:
+            print("WARN: Failed to save sync cache: %s" % e)
+            
+        print("SCRIPT_SUCCESS: Sync completed successfully (updated %d files)." % updated_count)
+    else:
+        print("SCRIPT_SUCCESS: Sync completed successfully (all files are up to date).")
 
 def run_compile(proj):
     apps = proj.find("Application", True)
     if not apps:
         raise Exception("Application node not found in project")
     app = apps[0]
-    print("Application found: %s. Rebuilding..." % app.get_name())
-    app.clean()
+    print("Application found: %s. Building (incremental)..." % app.get_name())
     build_result = app.build()
     print("Build command completed.")
     
