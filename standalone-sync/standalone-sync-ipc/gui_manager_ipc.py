@@ -212,6 +212,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.poll_timer = QtCore.QTimer()
         self.poll_timer.timeout.connect(self.poll_ipc)
 
+        self.status_timer = QtCore.QTimer()
+        self.status_timer.timeout.connect(self.check_environment_status)
+        self.status_timer.start(2000)
+        self.waiting_for_ping = False
+
         self.init_ui()
         self.load_config()
         self.refresh_git_status()
@@ -267,6 +272,31 @@ class MainWindow(QtWidgets.QMainWindow):
         paths_layout.addWidget(self.btn_open_ide)
 
         sidebar_layout.addWidget(grp_paths)
+
+        # --- Status Group ---
+        grp_status = QtWidgets.QGroupBox("Статус окружения")
+        status_layout = QtWidgets.QVBoxLayout(grp_status)
+        status_layout.setSpacing(8)
+
+        self.lbl_ide_status = QtWidgets.QLabel("Abak.IDE: Проверка...")
+        self.lbl_proj_status = QtWidgets.QLabel("Проект: Проверка...")
+        self.lbl_script_status = QtWidgets.QLabel("Скрипт IPC: Проверка...")
+        
+        status_layout.addWidget(self.lbl_ide_status)
+        status_layout.addWidget(self.lbl_proj_status)
+        status_layout.addWidget(self.lbl_script_status)
+
+        self.btn_launch_ide = QtWidgets.QPushButton("💻 Открыть проект в Abak.IDE")
+        self.btn_launch_ide.setObjectName("btn_browse")
+        self.btn_launch_ide.clicked.connect(self.launch_ide_only)
+        status_layout.addWidget(self.btn_launch_ide)
+
+        self.btn_run_script = QtWidgets.QPushButton("▶ Запустить скрипт IPC")
+        self.btn_run_script.setObjectName("btn_browse")
+        self.btn_run_script.clicked.connect(self.run_script_only)
+        status_layout.addWidget(self.btn_run_script)
+
+        sidebar_layout.addWidget(grp_status)
 
         grp_actions = QtWidgets.QGroupBox("Синхронизация через IPC")
         actions_layout = QtWidgets.QVBoxLayout(grp_actions)
@@ -534,6 +564,122 @@ class MainWindow(QtWidgets.QMainWindow):
             lock_file = resolved + ".~u"
             return os.path.exists(lock_file)
         return False
+
+    def launch_ide_only(self):
+        proj_path = self.txt_project_path.text().strip()
+        resolved_proj = self.resolve_project_path(proj_path)
+        if not os.path.exists(resolved_proj):
+            QtWidgets.QMessageBox.warning(self, "Ошибка", f"Файл проекта не найден:\n{resolved_proj}")
+            return
+            
+        ide_exe = "C:\\Program Files (x86)\\Abak.IDE.1.0.0\\CODESYS\\Common\\abak.ide.exe"
+        if not os.path.exists(ide_exe):
+            QtWidgets.QMessageBox.warning(self, "Ошибка", f"Исполняемый файл Abak.IDE не найден по пути:\n{ide_exe}")
+            return
+            
+        profile = "Abak.IDE V1.0.0.0"
+        cmd = f'start "" "{ide_exe}" --profile="{profile}" "{resolved_proj}"'
+        
+        try:
+            subprocess.Popen(cmd, shell=True)
+            self.write_log(f"<span style='color:#00f0ff;'>Запуск Abak.IDE с проектом...</span>\nКоманда: {cmd}")
+        except Exception as e:
+            self.write_log(f"<span style='color:#ef4444;'>Ошибка запуска: {e}</span>")
+
+    def run_script_only(self):
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(curr_dir, "ipc_listener.py")
+        automation_script = os.path.join(curr_dir, "attach_ipc_script.py")
+        
+        # Запускаем python-скрипт автоматизации GUI
+        cmd = f'start "" python "{automation_script}" "{script_path}"'
+        
+        try:
+            subprocess.Popen(cmd, shell=True)
+            self.write_log(f"<span style='color:#00f0ff;'>Попытка внедрения скрипта в открытый Abak.IDE...</span>\nКоманда: {cmd}")
+            self.write_log("<span style='color:#a1a1aa;'>Пожалуйста, не трогайте мышь и клавиатуру в течение 2-х секунд!</span>")
+        except Exception as e:
+            self.write_log(f"<span style='color:#ef4444;'>Ошибка запуска: {e}</span>")
+
+    def check_environment_status(self):
+        # 1. Check IDE process
+        ide_running = False
+        try:
+            import uiautomation as auto
+            if auto.WindowControl(searchDepth=1, RegexName=r'.*Abak\.IDE.*').Exists(0, 0):
+                ide_running = True
+        except ImportError:
+            try:
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                res = subprocess.run(["tasklist", "/FI", "IMAGENAME eq abak.ide.exe", "/NH"], capture_output=True, text=True, startupinfo=startupinfo, timeout=1.0)
+                if "abak.ide.exe" in res.stdout.lower():
+                    ide_running = True
+            except Exception:
+                pass
+
+        # 2. Check Project lock
+        proj_locked = self.is_project_locked()
+
+        if ide_running:
+            self.lbl_ide_status.setText("Abak.IDE: Запущена 🟢")
+            self.lbl_ide_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        else:
+            self.lbl_ide_status.setText("Abak.IDE: Не запущена 🔴")
+            self.lbl_ide_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+
+        if proj_locked:
+            self.lbl_proj_status.setText("Проект: Открыт 🟢")
+            self.lbl_proj_status.setStyleSheet("color: #10b981; font-weight: bold;")
+        else:
+            self.lbl_proj_status.setText("Проект: Не открыт 🔴")
+            self.lbl_proj_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+
+        # 3. Check Script status via ping
+        if ide_running and proj_locked:
+            if not self.poll_timer.isActive(): # don't interfere with real actions
+                if not self.waiting_for_ping:
+                    # Send ping
+                    ping_data = {"action": "ping", "sources_path": "", "add_context": False}
+                    try:
+                        with open(req_path, "w", encoding="utf-8") as f:
+                            json.dump(ping_data, f)
+                        self.ping_sent_time = time.time()
+                        self.waiting_for_ping = True
+                        self.lbl_script_status.setText("Скрипт IPC: Проверка...")
+                        self.lbl_script_status.setStyleSheet("color: #a1a1aa;")
+                    except:
+                        pass
+                else:
+                    # Check ping response
+                    if os.path.exists(res_path):
+                        try:
+                            with open(res_path, "r", encoding="utf-8") as f:
+                                res = json.load(f)
+                            if res.get("success"):
+                                self.lbl_script_status.setText("Скрипт IPC: Активен 🟢")
+                                self.lbl_script_status.setStyleSheet("color: #10b981; font-weight: bold;")
+                            else:
+                                self.lbl_script_status.setText("Скрипт IPC: Ошибка 🔴")
+                                self.lbl_script_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+                        except:
+                            pass
+                        finally:
+                            try: os.remove(res_path)
+                            except: pass
+                            try: os.remove(req_path)
+                            except: pass
+                        self.waiting_for_ping = False
+                    elif time.time() - getattr(self, 'ping_sent_time', 0) > 3.0:
+                        self.lbl_script_status.setText("Скрипт IPC: Не отвечает 🔴")
+                        self.lbl_script_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+                        self.waiting_for_ping = False
+                        try: os.remove(req_path)
+                        except: pass
+        else:
+            self.lbl_script_status.setText("Скрипт IPC: Нет среды 🔴")
+            self.lbl_script_status.setStyleSheet("color: #ef4444; font-weight: bold;")
+            self.waiting_for_ping = False
 
     # --- IPC execution logic ---
     def run_ipc_action(self, action):

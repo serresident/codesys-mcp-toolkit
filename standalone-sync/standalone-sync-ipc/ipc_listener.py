@@ -600,6 +600,9 @@ def handle_request(req):
         run_import(proj, sources_path)
     elif action == "compile":
         run_compile(proj)
+    elif action == "ping":
+        print("Ping received. IPC Listener is active.")
+        # Do nothing, just return success
     else:
         raise Exception("Unknown action: %s" % action)
 
